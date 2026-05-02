@@ -44,6 +44,13 @@ onMounted(async () => {
 })
 
 async function submit() {
+  // Guard: pokud captcha vyžadovaná a token chybí, nepouštět request.
+  // (button má `:disabled` ale Enter v inputu submitne form i s disabled buttonem
+  //  → bez tohoto guardu by 1. pokus šel s prázdným tokenem → 400 captcha_failed.)
+  if (captchaRequired.value && !turnstile.token.value) {
+    error.value = 'Počkej prosím, dokud se nenačte CAPTCHA…'
+    return
+  }
   error.value = ''
   try {
     await auth.login(email.value.trim(), password.value, turnstile.token.value || undefined, totp.value || undefined)
@@ -54,9 +61,14 @@ async function submit() {
     if (code === 'totp_required') {
       totpRequired.value = true
       error.value = ''
+      // Token byl spotřebovaný 1. pokusem (heslo OK, čekáme na TOTP).
+      // Reset → fresh token pro další pokus s TOTP kódem (jinak by 2. submit
+      // šel s already-consumed tokenem → captcha_failed → user musí submit 2x).
+      turnstile.reset()
     } else if (code === 'invalid_totp') {
       totp.value = ''
       error.value = msg || t('auth.totp_invalid')
+      turnstile.reset()  // taky reset — token z předchozího pokusu už invalid
     } else if (code === 'captcha_required') {
       captchaRequired.value = true
       error.value = 'Vyžaduje se ověření CAPTCHA.'

@@ -80,8 +80,6 @@ final class AuthMiddleware implements MiddlewareInterface
         }
 
         $path = $request->getUri()->getPath();
-        // DEBUG
-        error_log("AuthMiddleware path=" . var_export($path, true) . " match=" . (in_array($path, self::PUBLIC_PATHS, true) ? 'YES' : 'NO'));
         if (in_array($path, self::PUBLIC_PATHS, true)) {
             return $handler->handle($request);
         }

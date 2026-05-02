@@ -13,6 +13,8 @@ api/.phpunit.cache/
 web/node_modules/
 web/dist/
 manual/generated/
+publish.cmd
+production.cmd
 
 # OS junk
 .DS_Store

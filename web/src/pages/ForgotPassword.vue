@@ -36,6 +36,13 @@ onMounted(async () => {
 })
 
 async function submit() {
+  // Guard: pokud captcha vyžadovaná a token chybí, nepouštět request.
+  // Enter v inputu submitne form i s disabled buttonem → bez tohoto guardu by
+  // 1. pokus šel s prázdným tokenem → 400 captcha_failed.
+  if (captchaEnabled.value && !turnstile.token.value) {
+    error.value = 'Počkej prosím, dokud se nenačte CAPTCHA…'
+    return
+  }
   error.value = ''
   submitting.value = true
   try {
