@@ -15,7 +15,7 @@ Options -Indexes -MultiViews
     RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 
     # 2) Bezpečnostní bariéra: blokovat citlivé složky
-    RewriteRule ^(private|db|log|source|storage|node_modules|api/(src|vendor|templates|tests|bin))(/|$) - [F,L]
+    RewriteRule ^(private|db|log|source|storage|tools|node_modules|api/(src|vendor|templates|tests|bin))(/|$) - [F,L]
 
     # 2b) Blokovat cfg.php, composer.* a markdown v rootu
     RewriteRule ^(cfg\.php|cfg\.local\.php|composer\.(json|lock)|\.gitignore|\.env.*|[^/]*\.md|[^/]*\.sql)$ - [F,L]
