@@ -27,6 +27,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  *   GET    /api/bank-statements/{id}           detail (+ transactions)
  *   POST   /api/bank-transactions/{id}/match   { invoice_id }  manual match
  *   POST   /api/bank-transactions/{id}/ignore  mark as ignored
+ *   POST   /api/bank-transactions/{id}/unmatch reset back to unmatched
  */
 final class BankStatementAction
 {
@@ -297,6 +298,113 @@ final class BankStatementAction
             'paid_at'    => $postedAt,
         ], $ip, $request->getHeaderLine('User-Agent'));
         return Json::ok($response, ['matched' => true, 'paid_at' => $postedAt]);
+    }
+
+    public function unmatch(Request $request, Response $response, array $args): Response
+    {
+        $txId = (int) ($args['id'] ?? 0);
+        $pdo = $this->db->pdo();
+
+        $stmt = $pdo->prepare(
+            'SELECT id, statement_id, matched_invoice_id, posted_at, match_status
+               FROM bank_transactions WHERE id = ?'
+        );
+        $stmt->execute([$txId]);
+        $tx = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$tx) {
+            return Json::error($response, 'not_found', 'Transakce nenalezena.', 404);
+        }
+
+        $statementId = (int) $tx['statement_id'];
+        $invoiceId = $tx['matched_invoice_id'] !== null ? (int) $tx['matched_invoice_id'] : 0;
+        $postedAt = (string) ($tx['posted_at'] ?? '');
+
+        // Supplier scope check — fakturu (pokud byla spárována) ověř proti aktuálnímu supplier.
+        // Pokud transakce nebyla spárovaná (jen 'ignored'), ověř scope přes statement → currencies.
+        if ($invoiceId > 0) {
+            $invoice = $this->invoices->find($invoiceId);
+            if (!SupplierGuard::owns($request, $invoice)) {
+                return Json::error($response, 'not_found', 'Transakce nenalezena.', 404);
+            }
+        } else {
+            $sid = SupplierGuard::currentId($request);
+            $own = $pdo->prepare(
+                "SELECT 1 FROM bank_statements bs
+                  WHERE bs.id = ?
+                    AND EXISTS (
+                        SELECT 1 FROM currencies cur
+                         WHERE cur.supplier_id = ?
+                           AND TRIM(LEADING '0' FROM REGEXP_REPLACE(IFNULL(cur.account_number, ''), '[^0-9]', ''))
+                             = TRIM(LEADING '0' FROM REGEXP_REPLACE(IFNULL(bs.account_number, ''),  '[^0-9]', ''))
+                           AND (bs.bank_code IS NULL OR cur.bank_code IS NULL OR cur.bank_code = bs.bank_code)
+                    )"
+            );
+            $own->execute([$statementId, $sid]);
+            if (!$own->fetchColumn()) {
+                return Json::error($response, 'not_found', 'Transakce nenalezena.', 404);
+            }
+        }
+
+        $userId = (int) (((array) $request->getAttribute(AuthMiddleware::ATTR_USER, []))['id'] ?? 0);
+
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare(
+                "UPDATE bank_transactions
+                    SET matched_invoice_id = NULL,
+                        match_status       = 'unmatched',
+                        matched_at         = NULL,
+                        matched_by         = NULL
+                  WHERE id = ?"
+            )->execute([$txId]);
+
+            // Pokud byla faktura označena jako paid s paid_at = posted_at této transakce
+            // a nemá jinou stále spárovanou transakci, vrať ji na 'issued' a smaž paid_at.
+            // (Konzervativní heuristika — neměníme stav, který někdo nastavil ručně později.)
+            if ($invoiceId > 0 && $postedAt !== '') {
+                $other = $pdo->prepare(
+                    "SELECT COUNT(*) FROM bank_transactions
+                      WHERE matched_invoice_id = ?
+                        AND match_status IN ('auto_exact', 'auto_partial', 'manual')
+                        AND id <> ?"
+                );
+                $other->execute([$invoiceId, $txId]);
+                $stillMatched = (int) $other->fetchColumn();
+                if ($stillMatched === 0) {
+                    $pdo->prepare(
+                        "UPDATE invoices
+                            SET status = 'issued', paid_at = NULL
+                          WHERE id = ?
+                            AND status = 'paid'
+                            AND paid_at = ?"
+                    )->execute([$invoiceId, $postedAt]);
+                }
+            }
+
+            if ($statementId > 0) {
+                $pdo->prepare(
+                    "UPDATE bank_statements
+                        SET matched_count = (
+                            SELECT COUNT(*) FROM bank_transactions
+                             WHERE statement_id = ?
+                               AND match_status IN ('auto_exact', 'auto_partial', 'manual')
+                        )
+                      WHERE id = ?"
+                )->execute([$statementId, $statementId]);
+            }
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            return Json::error($response, 'unmatch_failed', 'Zrušení spárování selhalo: ' . $e->getMessage(), 500);
+        }
+
+        $ip = $this->ipMatcher->clientIpFromRequest($request->getServerParams());
+        $this->logger->log('bank.tx_unmatch', $userId ?: null, 'bank_transaction', $txId, [
+            'previous_invoice_id' => $invoiceId ?: null,
+            'previous_status'     => $tx['match_status'] ?? null,
+        ], $ip, $request->getHeaderLine('User-Agent'));
+
+        return Json::ok($response, ['unmatched' => true]);
     }
 
     public function ignore(Request $request, Response $response, array $args): Response

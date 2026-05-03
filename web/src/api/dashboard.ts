@@ -5,6 +5,7 @@ export interface DashboardKpi {
     currency: string
     this_year: number
     prev_year: number
+    prev_year_ytd: number
     change_pct: number | null
   }>
   issued_count_ytd: number
@@ -38,8 +39,10 @@ export interface TopClient {
 
 export interface RevenueByMonth {
   currency: string
-  this_year: number[]
-  prev_year: number[]
+  /** 12 entries, ascending, ending in current month */
+  months: Array<{ ym: string; total: number }>
+  /** Stejných 12 měsíců o rok dříve (porovnávací řada) */
+  prev_year: Array<{ ym: string; total: number }>
 }
 
 export interface DashboardSummary {

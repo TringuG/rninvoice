@@ -109,8 +109,9 @@ function openInvoice(id: number) {
         <div v-for="c in summary.kpi.per_currency" :key="c.currency" class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm">
           <div class="text-xs uppercase tracking-wide text-neutral-500 mb-1">{{ t('dashboard.revenue', { year: summary.year, currency: c.currency }) }}</div>
           <div class="text-2xl font-semibold text-neutral-900 font-mono">{{ formatMoney(c.this_year, c.currency) }}</div>
-          <div v-if="c.change_pct !== null" class="text-xs mt-1" :class="c.change_pct >= 0 ? 'text-success-600' : 'text-danger-500'">
-            {{ c.change_pct >= 0 ? '▲' : '▼' }} {{ Math.abs(c.change_pct) }} % vs {{ summary.prev_year }}
+          <div v-if="c.change_pct !== null" class="text-xs mt-1" :class="c.change_pct >= 0 ? 'text-success-600' : 'text-danger-500'"
+            :title="t('dashboard.yoy_ytd_tooltip', { year: summary.prev_year, total: formatMoney(c.prev_year, c.currency), ytd: formatMoney(c.prev_year_ytd, c.currency) })">
+            {{ c.change_pct >= 0 ? '▲' : '▼' }} {{ Math.abs(c.change_pct) }} % {{ t('dashboard.vs_prev_ytd', { year: summary.prev_year }) }}
           </div>
           <div v-else class="text-xs text-neutral-400 mt-1">{{ t('dashboard.no_prev_year', { year: summary.prev_year }) }}</div>
         </div>
@@ -186,19 +187,13 @@ function openInvoice(id: number) {
         </div>
       </div>
 
-      <!-- Revenue chart per currency -->
+      <!-- Revenue chart per currency — posledních 12 měsíců (rolling) -->
       <div v-if="hasAnyRevenue" class="space-y-4">
         <div v-for="rev in summary.revenue_by_month" :key="rev.currency" class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm">
           <h3 class="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-4">
-            {{ t('dashboard.revenue_by_month', { currency: rev.currency }) }}
+            {{ t('dashboard.revenue_last_12_months', { currency: rev.currency }) }}
           </h3>
-          <RevenueChart
-            :this-year="rev.this_year"
-            :prev-year="rev.prev_year"
-            :currency="rev.currency"
-            :year-label="summary.year"
-            :prev-year-label="summary.prev_year"
-          />
+          <RevenueChart :months="rev.months" :prev-year="rev.prev_year" :currency="rev.currency" />
         </div>
       </div>
 

@@ -11,7 +11,7 @@ use PDO;
  * Přepočítává cache tabulky `project_revenue_cache` a `client_revenue_cache`
  * po každé změně faktur (create/update/issue/cancel/delete).
  *
- * Ne-stornované faktury všech typů kromě `cancellation` se sčítají per (entity, currency).
+ * Sčítají se jen faktury (`invoice`) a dobropisy (`credit_note`) — proformy a stornovací doklady ne.
  * `last_invoice_date` = MAX(COALESCE(tax_date, issue_date)) z těchto faktur.
  *
  * Idempotentní — vždy mažeme všechny existující řádky pro danou entity a re-insertujeme.
@@ -41,7 +41,7 @@ final class StatsRecomputer
                    FROM invoices i
                   WHERE i.project_id = ?
                     AND i.status IN ('issued', 'sent', 'reminded', 'paid')
-                    AND i.invoice_type != 'cancellation'
+                    AND i.invoice_type IN ('invoice', 'credit_note')
                GROUP BY i.currency_id"
             );
             $stmt->execute([$projectId]);
@@ -88,7 +88,7 @@ final class StatsRecomputer
                    FROM invoices i
                   WHERE i.client_id = ?
                     AND i.status IN ('issued', 'sent', 'reminded', 'paid')
-                    AND i.invoice_type != 'cancellation'
+                    AND i.invoice_type IN ('invoice', 'credit_note')
                GROUP BY i.currency_id"
             );
             $stmt->execute([$clientId]);

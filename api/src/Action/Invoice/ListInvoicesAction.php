@@ -46,7 +46,7 @@ final class ListInvoicesAction
         }
 
         $page = max(1, (int) ($q['page'] ?? 1));
-        $default = (int) $this->config->get('pagination.invoices_per_page', 20);
+        $default = (int) $this->config->get('pagination.invoices_per_page', 50);
         $perPage = min(200, max(5, (int) ($q['per_page'] ?? $default)));
 
         return Json::ok($response, $this->repo->listGroupedByMonth($filters, $page, $perPage));

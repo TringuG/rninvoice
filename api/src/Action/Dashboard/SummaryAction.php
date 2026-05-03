@@ -38,7 +38,7 @@ final class SummaryAction
             'unpaid_upcoming'        => $this->unpaidUpcoming($pdo, $sid),
             'top_clients_ytd'        => $this->topClients($pdo, $year, $sid),
             'top_clients_prev_year'  => $this->topClients($pdo, $prevYear, $sid),
-            'revenue_by_month'       => $this->revenueByMonth($pdo, $year, $prevYear, $sid),
+            'revenue_by_month'       => $this->revenueByMonth($pdo, $sid),
             'pending_approvals'      => $this->pendingApprovals($pdo, $sid),
             'today'                  => $today->format('Y-m-d'),
             'year'                   => $year,
@@ -75,47 +75,54 @@ final class SummaryAction
         // Obrat per měna pro YTD (letošní vs. minulý rok)
         // Záměrně počítáme i NEZAPLACENÉ faktury, pokud jsou vystavené (status: issued / sent / paid).
         // Dobropisy (credit_note) sem NEZAHRNUJEME — zobrazují se separátně, aby neuměle nesnižovaly obrat.
-        $sql = "SELECT cur.code AS currency, YEAR(COALESCE(i.tax_date, i.issue_date)) AS y, SUM(i.total_with_vat) AS total
+        //
+        // change_pct: porovnává this_year (YTD) s prev_year_ytd — tj. minulý rok jen do stejné kalendářní
+        // pozice (DATE_SUB(CURDATE(), INTERVAL 1 YEAR)) — fair YoY pro nedokončený aktuální rok.
+        // prev_year zůstává jako celoroční total pro kontext (zobrazení v UI / fallback grafy).
+        $sql = "SELECT cur.code AS currency,
+                       SUM(CASE WHEN YEAR(COALESCE(i.tax_date, i.issue_date)) = ?
+                                 THEN i.total_with_vat ELSE 0 END) AS this_year,
+                       SUM(CASE WHEN YEAR(COALESCE(i.tax_date, i.issue_date)) = ?
+                                 THEN i.total_with_vat ELSE 0 END) AS prev_year,
+                       SUM(CASE WHEN YEAR(COALESCE(i.tax_date, i.issue_date)) = ?
+                                  AND COALESCE(i.tax_date, i.issue_date) <= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                                 THEN i.total_with_vat ELSE 0 END) AS prev_year_ytd
                   FROM invoices i
                   JOIN currencies cur ON cur.id = i.currency_id
                  WHERE i.supplier_id = ?
                    AND YEAR(COALESCE(i.tax_date, i.issue_date)) IN (?, ?)
                    AND i.status IN ('issued', 'sent', 'reminded', 'paid')
                    AND i.invoice_type = 'invoice'
-                 GROUP BY cur.code, y";
+                 GROUP BY cur.code";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$sid, $year, $prevYear]);
+        $stmt->execute([$year, $prevYear, $prevYear, $sid, $year, $prevYear]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $perCurrency = [];
         foreach ($rows as $r) {
-            $cur = $r['currency'];
-            if (!isset($perCurrency[$cur])) {
-                $perCurrency[$cur] = [
-                    'currency'   => $cur,
-                    'this_year'  => 0.0,
-                    'prev_year'  => 0.0,
-                    'change_pct' => null,
-                ];
+            $thisYear = (float) $r['this_year'];
+            $prevYearTotal = (float) $r['prev_year'];
+            $prevYearYtd = (float) $r['prev_year_ytd'];
+            $changePct = null;
+            if ($prevYearYtd > 0) {
+                $changePct = round((($thisYear - $prevYearYtd) / $prevYearYtd) * 100, 1);
             }
-            $perCurrency[$cur][(int) $r['y'] === $year ? 'this_year' : 'prev_year'] = (float) $r['total'];
+            $perCurrency[(string) $r['currency']] = [
+                'currency'      => (string) $r['currency'],
+                'this_year'     => round($thisYear, 2),
+                'prev_year'     => round($prevYearTotal, 2),
+                'prev_year_ytd' => round($prevYearYtd, 2),
+                'change_pct'    => $changePct,
+            ];
         }
-        foreach ($perCurrency as &$pc) {
-            if ($pc['prev_year'] > 0) {
-                $pc['change_pct'] = round((($pc['this_year'] - $pc['prev_year']) / $pc['prev_year']) * 100, 1);
-            }
-            $pc['this_year'] = round($pc['this_year'], 2);
-            $pc['prev_year'] = round($pc['prev_year'], 2);
-        }
-        unset($pc);
 
-        // Počet vystavených YTD
+        // Počet vystavených YTD — proformy se nezapočítávají (nejde o finální daňový doklad).
         $stmt = $pdo->prepare(
             "SELECT COUNT(*) FROM invoices
               WHERE supplier_id = ?
                 AND YEAR(COALESCE(tax_date, issue_date)) = ?
                 AND status NOT IN ('draft', 'cancelled')
-                AND invoice_type IN ('invoice', 'credit_note', 'proforma')"
+                AND invoice_type IN ('invoice', 'credit_note')"
         );
         $stmt->execute([$sid, $year]);
         $issuedCount = (int) $stmt->fetchColumn();
@@ -245,51 +252,78 @@ final class SummaryAction
     }
 
     /**
-     * Obrat per měsíc (1-12) pro letošní + minulý rok, per měna.
-     * Output: { 'CZK': { '2026': [m1..m12], '2025': [m1..m12] }, 'EUR': {...} }
+     * Obrat za posledních 12 měsíců (rolling window končící aktuálním měsícem) + porovnávací řada
+     * pro stejných 12 měsíců o rok dříve (–1 rok), per měna.
+     *
+     * Output: [
+     *   { currency: 'CZK',
+     *     months:    [ { ym: 'YYYY-MM', total: 0.0 }, ... 12 entries ascending ],
+     *     prev_year: [ { ym: 'YYYY-MM', total: 0.0 }, ... 12 entries ascending, –12 měsíců ] },
+     *   ...
+     * ]
      */
-    private function revenueByMonth(\PDO $pdo, int $year, int $prevYear, int $sid): array
+    private function revenueByMonth(\PDO $pdo, int $sid): array
     {
-        // Obrat po měsících — totéž pravidlo jako u kpi(): vystavené invoice bez dobropisů.
+        // Okno aktuálních 12 měsíců + 12 měsíců o rok dříve = celkem 24 měsíců dat.
+        // Začátek = (dnes − 23 měsíců, 1. den měsíce).
         $sql = "SELECT cur.code AS currency,
-                       YEAR(COALESCE(i.tax_date, i.issue_date)) AS y,
-                       MONTH(COALESCE(i.tax_date, i.issue_date)) AS m,
+                       DATE_FORMAT(COALESCE(i.tax_date, i.issue_date), '%Y-%m') AS ym,
                        SUM(i.total_with_vat) AS total
                   FROM invoices i
                   JOIN currencies cur ON cur.id = i.currency_id
                  WHERE i.supplier_id = ?
-                   AND YEAR(COALESCE(i.tax_date, i.issue_date)) IN (?, ?)
+                   AND COALESCE(i.tax_date, i.issue_date) >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 23 MONTH), '%Y-%m-01')
                    AND i.status IN ('issued', 'sent', 'reminded', 'paid')
                    AND i.invoice_type = 'invoice'
-                 GROUP BY cur.code, y, m";
+                 GROUP BY cur.code, ym";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$sid, $year, $prevYear]);
+        $stmt->execute([$sid]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $out = [];
-        foreach ($rows as $r) {
-            $cur = $r['currency'];
-            $y = (string) $r['y'];
-            $m = (int) $r['m'];
-            if (!isset($out[$cur])) {
-                $out[$cur] = [
-                    (string) $year     => array_fill(1, 12, 0.0),
-                    (string) $prevYear => array_fill(1, 12, 0.0),
-                ];
-            }
-            $out[$cur][$y][$m] = round((float) $r['total'], 2);
+        // Sloty: aktuální 12 měsíců (months) + 12 měsíců o rok dříve (prev_year).
+        $monthsSlots = [];
+        $prevSlots = [];
+        $cursor = new \DateTimeImmutable(date('Y-m-01'));
+        $cursorThis = $cursor->modify('-11 months');
+        $cursorPrev = $cursor->modify('-23 months');
+        for ($i = 0; $i < 12; $i++) {
+            $monthsSlots[$cursorThis->format('Y-m')] = 0.0;
+            $prevSlots[$cursorPrev->format('Y-m')]   = 0.0;
+            $cursorThis = $cursorThis->modify('+1 month');
+            $cursorPrev = $cursorPrev->modify('+1 month');
         }
 
-        // Reformat to use 0-indexed arrays for frontend Chart.js
-        $formatted = [];
-        foreach ($out as $cur => $years) {
-            $formatted[] = [
-                'currency' => $cur,
-                'this_year' => array_values($years[(string) $year]),
-                'prev_year' => array_values($years[(string) $prevYear]),
+        // Skupina per měna — totaly přiřaď do správného slotu (current vs. prev) dle YYYY-MM klíče.
+        $perCurrency = [];
+        foreach ($rows as $r) {
+            $cur = (string) $r['currency'];
+            $ym = (string) $r['ym'];
+            $total = round((float) $r['total'], 2);
+            if (!isset($perCurrency[$cur])) {
+                $perCurrency[$cur] = ['months' => $monthsSlots, 'prev_year' => $prevSlots];
+            }
+            if (array_key_exists($ym, $perCurrency[$cur]['months'])) {
+                $perCurrency[$cur]['months'][$ym] = $total;
+            } elseif (array_key_exists($ym, $perCurrency[$cur]['prev_year'])) {
+                $perCurrency[$cur]['prev_year'][$ym] = $total;
+            }
+        }
+
+        $toList = static fn (array $slots): array => array_map(
+            static fn ($ym, $t) => ['ym' => $ym, 'total' => $t],
+            array_keys($slots),
+            $slots
+        );
+
+        $out = [];
+        foreach ($perCurrency as $cur => $data) {
+            $out[] = [
+                'currency'  => $cur,
+                'months'    => $toList($data['months']),
+                'prev_year' => $toList($data['prev_year']),
             ];
         }
-        return $formatted;
+        return $out;
     }
 
     private function castListItem(array $r): array

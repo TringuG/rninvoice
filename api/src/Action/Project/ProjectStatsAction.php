@@ -34,7 +34,7 @@ final class ProjectStatsAction
                FROM invoices i
                JOIN currencies cur ON cur.id = i.currency_id
               WHERE i.supplier_id = ?
-                AND i.status != 'cancelled' AND i.invoice_type != 'cancellation'
+                AND i.status != 'cancelled' AND i.invoice_type IN ('invoice', 'credit_note')
            GROUP BY cur.code
            ORDER BY COUNT(*) DESC
               LIMIT 1"
@@ -70,7 +70,7 @@ final class ProjectStatsAction
                JOIN currencies cur ON cur.id = i.currency_id
               WHERE i.supplier_id = ?
                 AND i.status != 'cancelled'
-                AND i.invoice_type != 'cancellation'
+                AND i.invoice_type IN ('invoice', 'credit_note')
                 AND cur.code = ?
                 AND YEAR(COALESCE(i.tax_date, i.issue_date)) = ?
            GROUP BY p.id, p.name, c.company_name
@@ -114,7 +114,7 @@ final class ProjectStatsAction
                JOIN currencies cur ON cur.id = i.currency_id
               WHERE i.supplier_id = ?
                 AND i.status != 'cancelled'
-                AND i.invoice_type != 'cancellation'
+                AND i.invoice_type IN ('invoice', 'credit_note')
                 AND YEAR(COALESCE(i.tax_date, i.issue_date)) IN ($place)
            GROUP BY year, cur.code
            ORDER BY year DESC, total DESC"

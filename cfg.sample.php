@@ -140,7 +140,7 @@ return [
     'pagination' => [
         // Velikost stránky pro tlačítko "Další" v UI seznamech.
         // Min/max hranice (5 / 200) se enforcují v API; mimo rozsah API hodnotu clampuje.
-        'invoices_per_page' => 20,
+        'invoices_per_page' => 50,
         'clients_per_page'  => 50,
         'projects_per_page' => 50,
     ],

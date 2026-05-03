@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Chart,
@@ -17,37 +17,44 @@ import {
 Chart.register(BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const props = defineProps<{
-  thisYear: number[]
-  prevYear: number[]
+  months: Array<{ ym: string; total: number }>
+  prevYear: Array<{ ym: string; total: number }>
   currency: string
-  yearLabel: number
-  prevYearLabel: number
 }>()
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 let chart: Chart | null = null
 
-const { t, locale } = useI18n()
-const monthLabels = computed(() => (t('common.months_short') as unknown as string[]))
+const { locale } = useI18n()
+
+/** Label „04/2026" — měsíc/rok podle aktuální řady (months). */
+function labelFor(ym: string): string {
+  const [y, m] = ym.split('-')
+  return `${m}/${y}`
+}
 
 function build() {
   if (!canvas.value) return
   if (chart) chart.destroy()
 
+  const labels = props.months.map(p => labelFor(p.ym))
+  const data = props.months.map(p => p.total)
+  const prevData = props.prevYear.map(p => p.total)
+
   chart = new Chart(canvas.value, {
     type: 'bar',
     data: {
-      labels: monthLabels.value,
+      labels,
       datasets: [
         {
-          label: `${props.yearLabel}`,
-          data: props.thisYear,
+          label: `${props.currency}`,
+          data,
           backgroundColor: '#5C45A0',
           borderRadius: 4,
         },
         {
-          label: `${props.prevYearLabel}`,
-          data: props.prevYear,
+          label: `${props.currency} (-1y)`,
+          data: prevData,
           type: 'line',
           borderColor: '#A99CD8',
           backgroundColor: 'transparent',
@@ -70,6 +77,14 @@ function build() {
         tooltip: {
           backgroundColor: '#15131D',
           callbacks: {
+            // Prev-year tooltip ukazuje, ze kterého měsíce předchozího roku hodnota pochází.
+            title: (items) => {
+              if (!items.length) return ''
+              const i = items[0].dataIndex
+              const cur = props.months[i]?.ym
+              const prev = props.prevYear[i]?.ym
+              return cur && prev ? `${labelFor(cur)} · ${labelFor(prev)}` : (items[0].label ?? '')
+            },
             label: (ctx) => `${ctx.dataset.label}: ${formatVal(ctx.parsed.y ?? 0)} ${props.currency}`,
           },
         },
@@ -101,7 +116,7 @@ function formatTick(n: number): string {
 
 onMounted(build)
 onBeforeUnmount(() => chart?.destroy())
-watch(() => [props.thisYear, props.prevYear, props.currency, locale.value], build, { deep: true })
+watch(() => [props.months, props.prevYear, props.currency, locale.value], build, { deep: true })
 </script>
 
 <template>

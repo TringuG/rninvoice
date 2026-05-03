@@ -64,6 +64,16 @@ async function ignoreTx(tx: BankTransaction) {
   await bankApi.ignore(tx.id)
   await load()
 }
+
+async function unmatchTx(tx: BankTransaction) {
+  if (!confirm(t('bank.unmatch_confirm'))) return
+  try {
+    await bankApi.unmatch(tx.id)
+    await load()
+  } catch (e: any) {
+    alert(apiErrorMessage(e, t('bank.unmatch_failed')))
+  }
+}
 </script>
 
 <template>
@@ -151,6 +161,10 @@ async function ignoreTx(tx: BankTransaction) {
               <button v-if="tx.match_status === 'unmatched'" @click="ignoreTx(tx)"
                 class="cursor-pointer text-neutral-500 hover:text-neutral-700">
                 {{ t('bank.ignore') }}
+              </button>
+              <button v-if="['auto_exact','auto_partial','manual','ignored'].includes(tx.match_status)"
+                @click="unmatchTx(tx)" class="cursor-pointer text-neutral-500 hover:text-danger-600">
+                {{ t('bank.unmatch') }}
               </button>
             </td>
           </tr>

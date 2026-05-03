@@ -207,8 +207,9 @@ final class Routes
         $app->post ('/api/bank-statements/scan',             [BankStatementAction::class, 'scan']);
         $app->get  ('/api/bank-statements',                  [BankStatementAction::class, 'list']);
         $app->get  ('/api/bank-statements/{id:[0-9]+}',      [BankStatementAction::class, 'detail']);
-        $app->post ('/api/bank-transactions/{id:[0-9]+}/match',  [BankStatementAction::class, 'manualMatch']);
-        $app->post ('/api/bank-transactions/{id:[0-9]+}/ignore', [BankStatementAction::class, 'ignore']);
+        $app->post ('/api/bank-transactions/{id:[0-9]+}/match',   [BankStatementAction::class, 'manualMatch']);
+        $app->post ('/api/bank-transactions/{id:[0-9]+}/unmatch', [BankStatementAction::class, 'unmatch']);
+        $app->post ('/api/bank-transactions/{id:[0-9]+}/ignore',  [BankStatementAction::class, 'ignore']);
 
         // 404 fallback pro /api/*
         $app->any('/api/{path:.*}', function ($req, $res) {

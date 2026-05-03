@@ -10,7 +10,7 @@ import { clientsApi, type Client } from '@/api/clients'
 import TableSkeleton from '@/components/ui/TableSkeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-const { t } = useI18n()
+const { t, tm, rt } = useI18n()
 const toast = useToast()
 
 useHotkey('ctrl+n', (e) => { e.preventDefault(); router.push('/invoices/new') })
@@ -29,6 +29,7 @@ const statusFilter = ref<string>('')
 const typeFilter = ref<string>('')
 const clientFilter = ref<number | ''>('')
 const yearFilter = ref<number | ''>(new Date().getFullYear())
+const monthFilter = ref<number | ''>('')
 const dateFrom = ref<string>('')
 const dateTo = ref<string>('')
 const overdueOnly = ref(false)
@@ -201,6 +202,7 @@ async function exportCsv() {
       status: statusFilter.value || undefined,
       type: typeFilter.value || undefined,
       year: dateFrom.value || dateTo.value ? undefined : (yearFilter.value === '' ? undefined : Number(yearFilter.value)),
+      month: dateFrom.value || dateTo.value || yearFilter.value === '' || monthFilter.value === '' ? undefined : Number(monthFilter.value),
       date_from: dateFrom.value || undefined,
       date_to:   dateTo.value || undefined,
     })
@@ -256,6 +258,7 @@ async function load(reset = true) {
       type: typeFilter.value || undefined,
       client_id: clientFilter.value === '' ? undefined : Number(clientFilter.value),
       year: dateFrom.value || dateTo.value ? undefined : (yearFilter.value === '' ? undefined : Number(yearFilter.value)),
+      month: dateFrom.value || dateTo.value || yearFilter.value === '' || monthFilter.value === '' ? undefined : Number(monthFilter.value),
       date_from: dateFrom.value || undefined,
       date_to:   dateTo.value || undefined,
       overdue: overdueOnly.value || undefined,
@@ -285,7 +288,10 @@ onMounted(async () => {
   await load(true)
 })
 
-watch([statusFilter, typeFilter, clientFilter, yearFilter, dateFrom, dateTo, overdueOnly, unpaidOnly], () => load(true))
+watch([statusFilter, typeFilter, clientFilter, yearFilter, monthFilter, dateFrom, dateTo, overdueOnly, unpaidOnly], () => load(true))
+// Když se vyčistí rok (vše/range), automaticky zrušit i měsíční filtr.
+watch(yearFilter, (y) => { if (y === '') monthFilter.value = '' })
+watch([dateFrom, dateTo], ([f, to]) => { if (f || to) monthFilter.value = '' })
 watch(search, () => {
   if (searchTimeout) clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => load(true), 300)
@@ -301,6 +307,10 @@ const yearOptions = computed(() => {
   const y = new Date().getFullYear()
   return [y, y - 1, y - 2, y - 3, y - 4]
 })
+
+// `tm()` vrací raw translation message (pole), kdežto `t()` na poli vrátí stringified verzi.
+// `rt()` zformátuje jednotlivé položky pole (pro případnou interpolaci).
+const monthOptions = computed(() => (tm('common.months_short') as unknown as string[]).map(m => rt(m)))
 </script>
 
 <template>
@@ -382,6 +392,12 @@ const yearOptions = computed(() => {
           class="h-9 px-3 border border-neutral-300 rounded-md bg-white text-sm disabled:opacity-50">
           <option value="">{{ t('invoice.all_years') }}</option>
           <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
+        </select>
+        <select v-model="monthFilter" :disabled="!!dateFrom || !!dateTo || yearFilter === ''"
+          class="h-9 px-3 border border-neutral-300 rounded-md bg-white text-sm disabled:opacity-50"
+          :title="t('invoice.month_filter')">
+          <option :value="''">{{ t('invoice.all_months') }}</option>
+          <option v-for="(label, i) in monthOptions" :key="i + 1" :value="i + 1">{{ label }}</option>
         </select>
         <input v-model="dateFrom" type="date" placeholder="Od"
           class="h-9 px-2 border border-neutral-300 rounded-md text-sm" title="Datum od" />
