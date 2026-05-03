@@ -75,6 +75,7 @@ final class ProjectRepository
         $orderBy = match ($sort) {
             'revenue'       => 'revenue DESC, p.name',
             'last_activity' => 'last_invoice_date IS NULL, last_invoice_date DESC, p.name',
+            'client'        => 'c.company_name, p.name',
             default         => "p.status = 'active' DESC, p.name",
         };
 

@@ -140,23 +140,23 @@ async function submit() {
       {{ t('invoice.client') }}: <span class="font-medium text-neutral-900">{{ client.company_name }}</span>
     </div>
 
-    <form @submit.prevent="submit" class="bg-white border border-neutral-200 rounded-lg shadow-sm">
+    <form @submit.prevent="submit" autocomplete="off" class="bg-white border border-neutral-200 rounded-lg shadow-sm">
       <div class="p-5 space-y-4">
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.name') }} *</label>
-          <input v-model="form.name" required
+          <input autocomplete="off" v-model="form.name" required
             class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.payment_due_days') }} *</label>
-            <input v-model.number="form.payment_due_days" type="number" min="1" max="365" required
+            <input autocomplete="off" v-model.number="form.payment_due_days" type="number" min="1" max="365" required
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.hourly_rate') }}</label>
-            <input v-model.number="form.hourly_rate" type="number" step="0.01" min="0"
+            <input autocomplete="off" v-model.number="form.hourly_rate" type="number" step="0.01" min="0"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md font-mono focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
@@ -180,12 +180,12 @@ async function submit() {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.project_number') }}</label>
-            <input v-model="form.project_number"
+            <input autocomplete="off" v-model="form.project_number"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.contract_number') }}</label>
-            <input v-model="form.contract_number"
+            <input autocomplete="off" v-model="form.contract_number"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
         </div>
@@ -193,17 +193,17 @@ async function submit() {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.budget_total') }}</label>
-            <input v-model.number="form.budget_total" type="number" step="0.01" min="0"
+            <input autocomplete="off" v-model.number="form.budget_total" type="number" step="0.01" min="0"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md font-mono focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.budget_yearly') }}</label>
-            <input v-model.number="form.budget_yearly" type="number" step="0.01" min="0"
+            <input autocomplete="off" v-model.number="form.budget_yearly" type="number" step="0.01" min="0"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md font-mono focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.budget_monthly') }}</label>
-            <input v-model.number="form.budget_monthly" type="number" step="0.01" min="0"
+            <input autocomplete="off" v-model.number="form.budget_monthly" type="number" step="0.01" min="0"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md font-mono focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
         </div>
@@ -218,9 +218,9 @@ async function submit() {
           </p>
           <div class="space-y-2">
             <div v-for="(_, i) in billingEmailInput" :key="i" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input v-model="billingEmailInput[i].email" type="email" :placeholder="`Email #${i + 1}`"
+              <input autocomplete="off" v-model="billingEmailInput[i].email" type="email" :placeholder="`Email #${i + 1}`"
                 class="sm:col-span-2 h-9 px-3 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
-              <input v-model="billingEmailInput[i].label" :placeholder="$i18n.locale === 'cs' ? 'Popisek (účetní, PM…)' : 'Label (accountant, PM…)'"
+              <input autocomplete="off" v-model="billingEmailInput[i].label" :placeholder="$i18n.locale === 'cs' ? 'Popisek (účetní, PM…)' : 'Label (accountant, PM…)'"
                 class="h-9 px-3 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
             </div>
           </div>
@@ -240,7 +240,7 @@ async function submit() {
 
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('project.note') }}</label>
-          <textarea v-model="form.note" rows="2"
+          <textarea autocomplete="off" v-model="form.note" rows="2"
             class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"></textarea>
         </div>
 

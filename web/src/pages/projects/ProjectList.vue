@@ -22,7 +22,7 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const status = ref<'' | 'active' | 'paused' | 'closed'>('active')
 const clientId = ref<number | ''>('')
-const sort = ref<'name' | 'revenue' | 'last_activity'>('name')
+const sort = ref<'name' | 'revenue' | 'last_activity' | 'client'>('name')
 const clients = ref<Client[]>([])
 
 async function load(reset = true) {
@@ -141,6 +141,7 @@ watch([status, clientId, sort], () => load(true))
         <select v-model="sort" class="h-9 px-3 border border-neutral-300 rounded-md text-sm bg-white ml-auto"
           :title="t('common.sort_by')">
           <option value="name">{{ t('common.sort_name') }}</option>
+          <option value="client">{{ t('common.sort_client') }}</option>
           <option value="revenue">{{ t('common.sort_revenue') }}</option>
           <option value="last_activity">{{ t('common.sort_last_activity') }}</option>
         </select>

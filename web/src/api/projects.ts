@@ -57,7 +57,7 @@ export const projectsApi = {
   listForClient: (clientId: number) =>
     api.get<{ data: Project[] }>(`/clients/${clientId}/projects`).then((r) => r.data.data),
 
-  list: (params?: { status?: string; client_id?: number; page?: number; per_page?: number; sort?: 'name' | 'revenue' | 'last_activity' }) =>
+  list: (params?: { status?: string; client_id?: number; page?: number; per_page?: number; sort?: 'name' | 'revenue' | 'last_activity' | 'client' }) =>
     api
       .get<ListResponse<Project>>('/projects', {
         params: {

@@ -154,7 +154,7 @@ async function submit() {
       <RouterLink to="/clients" class="text-sm text-neutral-600 hover:text-neutral-900">{{ t('client.back_to_list') }}</RouterLink>
     </div>
 
-    <form @submit.prevent="submit" class="bg-white border border-neutral-200 rounded-lg shadow-sm">
+    <form @submit.prevent="submit" autocomplete="off" class="bg-white border border-neutral-200 rounded-lg shadow-sm">
       <div class="p-5 space-y-4">
         <!-- Lookup helpers -->
         <div class="bg-primary-50 border border-primary-200 rounded-md p-3">
@@ -163,7 +163,7 @@ async function submit() {
             <div>
               <label class="block text-xs font-medium text-neutral-600 mb-1">{{ t('client.ic') }}</label>
               <div class="flex gap-2">
-                <input v-model="form.ic" maxlength="8" placeholder="12345678"
+                <input autocomplete="off" v-model="form.ic" maxlength="8" placeholder="12345678"
                   class="flex-1 h-9 px-3 border border-neutral-300 rounded-md font-mono text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
                 <button type="button" @click="loadFromAres" :disabled="!form.ic || aresLoading"
                   class="px-3 h-9 text-sm bg-white border border-primary-300 text-primary-700 rounded-md hover:bg-primary-100 disabled:opacity-50">
@@ -174,7 +174,7 @@ async function submit() {
             <div>
               <label class="block text-xs font-medium text-neutral-600 mb-1">{{ t('client.dic') }}</label>
               <div class="flex gap-2">
-                <input v-model="form.dic" placeholder="CZ12345678"
+                <input autocomplete="off" v-model="form.dic" placeholder="CZ12345678"
                   class="flex-1 h-9 px-3 border border-neutral-300 rounded-md font-mono text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
                 <button type="button" @click="checkVies" :disabled="!form.dic || viesLoading"
                   class="px-3 h-9 text-sm bg-white border border-primary-300 text-primary-700 rounded-md hover:bg-primary-100 disabled:opacity-50">
@@ -192,7 +192,7 @@ async function submit() {
         <!-- Základní -->
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.company_name') }} *</label>
-          <input v-model="form.company_name" required
+          <input autocomplete="off" v-model="form.company_name" required
             class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           <p v-if="errors.company_name" class="text-xs text-danger-500 mt-1">{{ errors.company_name[0] }}</p>
         </div>
@@ -200,13 +200,13 @@ async function submit() {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.main_email') }} *</label>
-            <input v-model="form.main_email" type="email" required
+            <input autocomplete="off" v-model="form.main_email" type="email" required
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
             <p v-if="errors.main_email" class="text-xs text-danger-500 mt-1">{{ errors.main_email[0] }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.phone') }}</label>
-            <input v-model="form.phone"
+            <input autocomplete="off" v-model="form.phone"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
         </div>
@@ -214,12 +214,12 @@ async function submit() {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.street') }} *</label>
-            <input v-model="form.street" required
+            <input autocomplete="off" v-model="form.street" required
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.zip') }} *</label>
-            <input v-model="form.zip" required
+            <input autocomplete="off" v-model="form.zip" required
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
         </div>
@@ -227,7 +227,7 @@ async function submit() {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.city') }} *</label>
-            <input v-model="form.city" required
+            <input autocomplete="off" v-model="form.city" required
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div>
@@ -257,7 +257,7 @@ async function submit() {
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.payment_due_default') }}</label>
-            <input v-model.number="form.payment_due_default" type="number" min="1" max="365" placeholder="default"
+            <input autocomplete="off" v-model.number="form.payment_due_default" type="number" min="1" max="365" placeholder="default"
               class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
           </div>
           <div class="flex items-end">
@@ -270,7 +270,7 @@ async function submit() {
 
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-1">{{ t('client.note') }}</label>
-          <textarea v-model="form.note" rows="2"
+          <textarea autocomplete="off" v-model="form.note" rows="2"
             class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"></textarea>
         </div>
 
