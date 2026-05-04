@@ -45,7 +45,7 @@ const billingEmailInput = ref<{ position: 1 | 2 | 3; email: string; label: strin
 onMounted(async () => {
   currencies.value = await codebooksApi.currencies()
   if (form.value.currency_id === 0) {
-    const def = currencies.value.find(c => c.is_default && c.code === 'CZK') || currencies.value[0]
+    const def = currencies.value.find(c => c.is_default && c.code === 'EUR') || currencies.value[0]
     if (def) form.value.currency_id = def.id
   }
   // 1. Načti existující zakázku (edit) nebo client_id z query (nová)

@@ -14,7 +14,7 @@ final class Locale
 
     public static function set(string $locale): void
     {
-        self::$current = in_array($locale, ['cs', 'en'], true) ? $locale : 'cs';
+        self::$current = in_array($locale, ['sk', 'en'], true) ? $locale : 'sk';
     }
 
     public static function current(): string
@@ -22,3 +22,4 @@ final class Locale
         return self::$current;
     }
 }
+

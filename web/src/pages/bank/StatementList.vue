@@ -116,7 +116,7 @@ async function onFileSelected(e: Event) {
             <td class="px-3 py-2 text-xs">{{ formatDate(s.statement_date) }}<span v-if="s.statement_number" class="text-neutral-400 ml-1">#{{ s.statement_number }}</span></td>
             <td class="px-3 py-2 font-mono text-xs">{{ s.account_number }}</td>
             <td class="px-3 py-2 text-xs text-neutral-600 truncate max-w-xs">{{ s.file_name }}</td>
-            <td class="px-3 py-2 text-right font-mono text-xs">{{ formatMoney(s.curr_balance, 'CZK') }}</td>
+            <td class="px-3 py-2 text-right font-mono text-xs">{{ formatMoney(s.curr_balance, 'EUR') }}</td>
             <td class="px-3 py-2 text-center">{{ s.transaction_count }}</td>
             <td class="px-3 py-2 text-center">
               <span class="text-xs px-2 py-0.5 rounded font-medium"

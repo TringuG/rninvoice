@@ -7,11 +7,9 @@
 [![Docker](https://img.shields.io/badge/Docker-multi--arch-2496ED?logo=docker&logoColor=white)](https://github.com/radekhulan/myinvoice/pkgs/container/myinvoice)
 [![GHCR](https://img.shields.io/github/v/tag/radekhulan/myinvoice?label=GHCR&color=2496ED&logo=docker&logoColor=white)](https://github.com/radekhulan/myinvoice/pkgs/container/myinvoice)
 
-> **Český fakturační systém pro freelancery, OSVČ a malé firmy.**
-> Rychlé vystavování opakovaných faktur, QR platby, výkaz víceprací,
-> import bankovních výpisů, exporty pro účetní software — vše na vlastním serveru.
-
-Vyvíjí **[MyWebdesign.cz s.r.o.](https://mywebdesign.cz/)**
+> **Slovenský fakturačný systém pre freelancerov, OSVČ a malé firmy.**
+> Rýchle vydávanie opakovaných faktúr, QR platby, výkaz vykonanej práce,
+> import bankových výpisov, exporty pre účtovný software — všetko na vlastnom serveri.
 
 📖 **Online dokumentace: [myinvoice.cz/manual](https://myinvoice.cz/manual/)**
 
@@ -21,15 +19,15 @@ Vyvíjí **[MyWebdesign.cz s.r.o.](https://mywebdesign.cz/)**
 
 ## Proč MyInvoice.cz?
 
-Většina českých online fakturačních služeb je SaaS s měsíčními poplatky a vašimi
-fakturačními daty mimo váš dosah. **MyInvoice.cz je open-source, self-hosted**
-alternativa s důrazem na:
+Väčšina slovenských online fakturačných služieb je SaaS s mesačnými platbami a vašimi
+fakturačnými dátami mimo vašu dosahu. **MyInvoice.cz je open-source, self-hosted**
+alternatíva s dôrazom na:
 
-- **Tvoji databázi, tvoje data** — vše běží na vlastním (nebo pronajatém) serveru, žádný cloud.
-- **Multi-supplier od první verze** — fakturuj za více firem / IČ z jedné instalace, snadný přepínač v UI.
-- **Český kontext první** — ARES + VIES lookup, SPAYD QR (ČR) i SEPA EPC QR (EU),
-  ISDOC + Pohoda XML exporty, mod-11 validace bankovních účtů, GPC import výpisů.
-- **Nulové měsíční náklady** — jednorázový setup, žádné per-fakturové poplatky, žádné limity.
+- **Tvoja databáza, tvoje údaje** — všetko beží na vlastnom (alebo prenajatom) serveri, žiadny cloud.
+- **Multi-dodávateľ od prvej verzie** — fakturuj za viacero firiem / IČO z jednej inštalácie, ľahký prepínač v UI.
+- **Slovenský kontext prvý** — VIES lookup, SEPA EPC QR (EU) s EUR,
+  ISDOC exporty, mod-11 validácia bankových účtov, import výpisov.
+- **Nulové mesačné náklady** — jednorázový setup, žiadne poplatky za faktúru, žiadne limity.
 
 ---
 
@@ -51,8 +49,8 @@ alternativa s důrazem na:
 ![QR platba na PDF faktuře](manual/img/10_qr_platba.webp)
 
 ### 💳 Platby
-- **QR platby** přímo v PDF: SPAYD pro CZK, SEPA EPC pro EUR
-- **Import GPC** výpisů (ABO formát, KB / FIO / ČSOB / RB / ČS) s SHA256 dedupe
+- **QR platby** priamo v PDF: SEPA EPC pre EUR
+- **Import výpisov** (ABO formát, KB / FIO / ČSOB / RB / ČS) s SHA256 dedupe
 - **Auto-matching** transakcí na faktury podle VS + částky → automaticky `paid`
 - Manuální párování + označení transakce jako "ignorovat"
 - **Upomínky** po splatnosti — manuální tlačítko na detailu, hromadná akce, nebo cron
@@ -78,14 +76,14 @@ alternativa s důrazem na:
 - **Pohoda XML** (Stormware data package) — přímý import do Pohody bez ručního opisu
 - Per-dodavatel konfigurace Pohoda kódů (středisko, činnost, předkontace, číselná řada)
 
-### 📧 Komunikace
-- Odesílání faktur **e-mailem** (Symfony Mailer + DKIM podpora)
-- **Editor e-mailových šablon** v UI (Twig) — CZ / EN, HTML + plaintext varianty
-- Šablony: nová faktura, upomínka, reset hesla, test
+### 📧 Komunikácia
+- Odosielanie faktúr **e-mailom** (Symfony Mailer + DKIM podpora)
+- **Editor e-mailových šablón** v UI (Twig) — SK / EN, HTML + plaintext varianty
+- Šablóny: nová faktúra, upomienka, reset hesla, test
 - Per-dodavatel branding (`From:` jméno, `Reply-To:`)
 
-### 🔒 Bezpečnost
-- **CZ + EN lokalizace** UI i faktur
+### 🔒 Bezpečnosť
+- **SK + EN lokalizácia** UI aj faktúr
 - **Brute-force ochrana** (Redis nebo MariaDB MEMORY fallback) — 5 selhání → CAPTCHA, 30/h → 24h lockout
 - **Cloudflare Turnstile** CAPTCHA
 - **IP allowlist** (IPv4 + IPv6 + CIDR)

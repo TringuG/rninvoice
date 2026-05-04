@@ -17,8 +17,8 @@ return [
         'url'    => 'https://dev.example.com',       // veřejná URL aplikace, používá se v emailech (odkazy na faktury, reset hesla)
         'pepper' => 'CHANGE-ME',                     // doplňková sůl k password_hash, 32B base64: openssl rand -base64 32
         'secret_encryption_key' => '',               // 32B base64 pro AES-256-GCM (TOTP secrets); openssl rand -base64 32. Pokud prázdné, fallback HKDF z pepperu.
-        'timezone' => 'Europe/Prague',               // PHP date_default_timezone_set
-        'locale_default' => 'cs',                    // jazyk UI při prvním načtení (před přihlášením)
+        'timezone' => 'Europe/Bratislava',               // PHP date_default_timezone_set
+        'locale_default' => 'sk',                    // jazyk UI při prvním načtení (před přihlášením)
     ],
     'db' => [
         'host'    => '127.0.0.1',
@@ -135,7 +135,7 @@ return [
         'cache_dir'    => __DIR__ . '/storage/cache',     // file cache (ARES/VIES odpovědi, PDF mezikroky)
     ],
     'qr' => [
-        'czk_constant_symbol' => '0308',             // KS pro CZK platby (0308 = běžný platební styk)
+        'czk_constant_symbol' => '0308',             // KS pro CZK platby (0308 = běžný platební styk) — nevyužívá se pro EUR
     ],
     'pagination' => [
         // Velikost stránky pro tlačítko "Další" v UI seznamech.

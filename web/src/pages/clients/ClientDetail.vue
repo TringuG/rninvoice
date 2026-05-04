@@ -28,7 +28,7 @@ const primaryCurrency = computed(() => {
   const tally: Record<string, number> = {}
   for (const r of client.value?.revenue_by_month ?? []) tally[r.currency] = (tally[r.currency] ?? 0) + r.total
   const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]
-  return top?.[0] || client.value?.currency_default || 'CZK'
+  return top?.[0] || client.value?.currency_default || 'EUR'
 })
 const overdueAny = computed(() => (client.value?.unpaid_summary ?? []).some(u => u.overdue_count > 0))
 const monthlyChart = computed(() => {

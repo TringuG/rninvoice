@@ -173,9 +173,9 @@ final class Routes
 
         // Email šablony (admin only)
         $app->get    ('/api/admin/email-templates',                                  [EmailTemplateAction::class, 'list']);
-        $app->get    ('/api/admin/email-templates/{code:[a-z_]+}/{locale:cs|en}',    [EmailTemplateAction::class, 'get']);
-        $app->put    ('/api/admin/email-templates/{code:[a-z_]+}/{locale:cs|en}',    [EmailTemplateAction::class, 'put']);
-        $app->delete ('/api/admin/email-templates/{code:[a-z_]+}/{locale:cs|en}',    [EmailTemplateAction::class, 'delete']);
+        $app->get    ('/api/admin/email-templates/{code:[a-z_]+}/{locale:sk|en}',    [EmailTemplateAction::class, 'get']);
+        $app->put    ('/api/admin/email-templates/{code:[a-z_]+}/{locale:sk|en}',    [EmailTemplateAction::class, 'put']);
+        $app->delete ('/api/admin/email-templates/{code:[a-z_]+}/{locale:sk|en}',    [EmailTemplateAction::class, 'delete']);
 
         // Multi-supplier (M7)
         $app->get    ('/api/suppliers',                     [SettingsAction::class, 'listSuppliers']);

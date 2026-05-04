@@ -44,7 +44,7 @@ onMounted(async () => {
   countries.value = c
   currencies.value = cur
   if (form.value.currency_default_id === 0) {
-    const def = cur.find(x => x.is_default && x.code === 'CZK') || cur[0]
+    const def = cur.find(x => x.is_default && x.code === 'EUR') || cur[0]
     if (def) form.value.currency_default_id = def.id
   }
   if (isEdit.value && clientId.value) {

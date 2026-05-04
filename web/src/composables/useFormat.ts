@@ -2,14 +2,14 @@
  * Pomocné formátovací funkce pro peníze, datumy a procentua.
  */
 
-export function formatMoney(value: number | null | undefined, currency: string = 'CZK', decimals: number = 2): string {
+export function formatMoney(value: number | null | undefined, currency: string = 'EUR', decimals: number = 2): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—'
-  const formatter = new Intl.NumberFormat('cs-CZ', {
+  const formatter = new Intl.NumberFormat('sk-SK', {
     style: 'decimal',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })
-  const symbol = currency === 'CZK' ? 'Kč' : currency === 'EUR' ? '€' : currency
+  const symbol = currency === 'EUR' ? '€' : currency === 'CZK' ? 'Kč' : currency
   return `${formatter.format(value)} ${symbol}`
 }
 
@@ -17,15 +17,15 @@ export function formatDate(date: string | null | undefined): string {
   if (!date) return '—'
   const d = new Date(date)
   if (Number.isNaN(d.getTime())) return date
-  return new Intl.DateTimeFormat('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(d)
+  return new Intl.DateTimeFormat('sk-SK', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(d)
 }
 
 export function formatMonth(yyyymm: string): string {
   const [y, m] = yyyymm.split('-').map(Number)
   if (!y || !m) return yyyymm
-  const months = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec']
+  const months = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
   return `${months[m - 1]} ${y}`
-}
+
 
 export function formatPercent(value: number): string {
   return `${value.toFixed(value % 1 === 0 ? 0 : 2)} %`
